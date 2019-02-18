@@ -1,0 +1,6 @@
+[submodule "HOMAR-FTC-Library"]
+	path = libs/HOMAR-FTC-Library
+	url = https://github.com/StPaulAcademy/HOMAR-FTC-Library.git
+[submodule "libs/DogeCV"]
+	path = libs/DogeCV
+	url = https://github.com/MechanicalMemes/DogeCV.git
