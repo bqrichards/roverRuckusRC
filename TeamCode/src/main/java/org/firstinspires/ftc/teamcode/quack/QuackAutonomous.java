@@ -4,6 +4,7 @@ import android.support.annotation.CallSuper;
 
 import com.disnodeteam.dogecv.CameraViewDisplay;
 import com.disnodeteam.dogecv.DogeCV;
+import com.disnodeteam.dogecv.detectors.roverrukus.CitrusGoldAlignDetector;
 import com.disnodeteam.dogecv.detectors.roverrukus.GoldAlignDetector;
 import com.disnodeteam.dogecv.detectors.roverrukus.SamplingOrderDetector;
 import com.disnodeteam.dogecv.filters.LeviColorFilter;
@@ -14,7 +15,10 @@ import org.firstinspires.ftc.robotcore.external.navigation.AngleUnit;
 import org.firstinspires.ftc.robotcore.external.navigation.AxesOrder;
 import org.firstinspires.ftc.robotcore.external.navigation.AxesReference;
 import org.firstinspires.ftc.robotcore.external.navigation.Orientation;
+import org.opencv.core.Point;
 import org.opencv.core.Size;
+
+import java.util.Locale;
 
 import static com.disnodeteam.dogecv.detectors.roverrukus.SamplingOrderDetector.GoldLocation.CENTER;
 import static com.disnodeteam.dogecv.detectors.roverrukus.SamplingOrderDetector.GoldLocation.LEFT;
@@ -33,17 +37,15 @@ public class QuackAutonomous extends LinearOpMode {
     private final int RIGHT_STRAFE_DISTANCE = 2000;
 
     private final int LIFT_ENCODER_COMPETITION = -20300;
-    private final int LIFT_ENCODER_HOME_FIELD = -20255;
-    private final boolean AT_COMPETITION = false;
 
     protected SamplingOrderDetector.GoldLocation goldLocation;
 
     // DogeCV stuff
-    private GoldAlignDetector detector;
+    private CitrusGoldAlignDetector detector;
 
     private void initDogeCV() {
         WebcamName webcam = hardwareMap.get(WebcamName.class, "Webcam 1");
-        detector = new GoldAlignDetector();
+        detector = new CitrusGoldAlignDetector();
         detector.VUFORIA_KEY = "AdwI1KD/////AAABmUC5Du193Ev9mWh7pbGwY5kaAjJ" +
                 "LosnOnmkTaYcicb0TEraARC6tZLVtsjR12Qc0PB7Ddenye7i+2m6aFj6Ds+U5XC5SF" +
                 "oynEHD+EvKTGjI6P3sigllCw9M2XtYQ/3po9lu1Fd0KYJkHQiGFhgSiehwJ4qOsLkq" +
@@ -51,30 +53,35 @@ public class QuackAutonomous extends LinearOpMode {
                 "gNdT9pNS+AW4sVgSQ8C0fT/CnlTJAi6ssnphApMfIjg0ZAlSiicoXyZW0W1OX658Ov" +
                 "/6aIZ1DwFZ3pskXSwK77JS7XLmFSDVQJLROSaIzw59yUY61gLe4YuqkD2YSsPXhg2t" +
                 "m1bf/ZU";
-        detector.init(hardwareMap.appContext, CameraViewDisplay.getInstance(), DogeCV.CameraMode.WEBCAM, false, webcam);
-        detector.yellowFilter = new LeviColorFilter(LeviColorFilter.ColorPreset.YELLOW, 100);
+        detector.init(hardwareMap.appContext, CameraViewDisplay.getInstance(),
+                DogeCV.CameraMode.WEBCAM, false, webcam);
+        detector.yellowFilter = new LeviColorFilter(
+                LeviColorFilter.ColorPreset.YELLOW, 100);
         detector.useDefaults();
-        detector.areaScoringMethod = DogeCV.AreaScoringMethod.MAX_AREA;
         detector.enable();
     }
 
     private SamplingOrderDetector.GoldLocation grabGoldLocation() {
         Size size = detector.getAdjustedSize();
-        double center = size.width / 2;
+        if (size == null) {
+            return UNKNOWN;
+        }
 
-        double leftDist = Math.abs(detector.getXPosition());
-        double centerDist = Math.abs(detector.getXPosition() - center);
-        double rightDist = Math.abs(detector.getXPosition() - size.width);
+        double center = size.height / 2;
+
+        double leftDist = Math.abs(detector.goldYPos);
+        double centerDist = Math.abs(detector.goldYPos - center);
+        double rightDist = Math.abs(detector.goldYPos - size.height);
         double closest = minimum(leftDist, centerDist, rightDist);
 
         if (closest == leftDist) {
-            return SamplingOrderDetector.GoldLocation.LEFT;
+            return LEFT;
         } else if (closest == centerDist) {
-            return SamplingOrderDetector.GoldLocation.CENTER;
+            return CENTER;
         } else if (closest == rightDist) {
-            return SamplingOrderDetector.GoldLocation.RIGHT;
+            return RIGHT;
         } else {
-            return SamplingOrderDetector.GoldLocation.UNKNOWN;
+            return UNKNOWN;
         }
     }
 
@@ -102,8 +109,7 @@ public class QuackAutonomous extends LinearOpMode {
                 goldLocation = updatedGoldLoc;
             }
 
-            telemetry.addData("isFound", detector.isFound());
-            telemetry.addData("Location", goldLocation);
+            telemetry.addData("Gold Location", goldLocation);
             telemetry.update();
         } while (!isStarted());
 
@@ -116,8 +122,6 @@ public class QuackAutonomous extends LinearOpMode {
         strafe(LEFT, 600, 1);
 
         pause();
-
-        double heading = get360Heading();
 
         drive(500, 0.8);
 
@@ -168,8 +172,7 @@ public class QuackAutonomous extends LinearOpMode {
      * This is the first action we run in autonomous.
      */
     private void lowerFromLander() {
-        double targetEncoder = AT_COMPETITION ? LIFT_ENCODER_COMPETITION : LIFT_ENCODER_HOME_FIELD;
-        targetEncoder += robot.lift.getCurrentPosition();
+        double targetEncoder = LIFT_ENCODER_COMPETITION + robot.lift.getCurrentPosition();
 
         robot.lift.setPower(-0.9);
 
@@ -320,8 +323,10 @@ public class QuackAutonomous extends LinearOpMode {
      * @return The heading of the robot from IMU A
      */
     private float getHeading() {
-        Orientation anglesA = robot.imu.getAngularOrientation(AxesReference.INTRINSIC, AxesOrder.ZYX, AngleUnit.DEGREES);
-        return AngleUnit.DEGREES.normalize(AngleUnit.DEGREES.fromUnit(anglesA.angleUnit, anglesA.firstAngle));
+        Orientation anglesA = robot.imu.getAngularOrientation(
+                AxesReference.INTRINSIC, AxesOrder.ZYX, AngleUnit.DEGREES);
+        return AngleUnit.DEGREES.normalize(
+                AngleUnit.DEGREES.fromUnit(anglesA.angleUnit, anglesA.firstAngle));
     }
 
     /**
