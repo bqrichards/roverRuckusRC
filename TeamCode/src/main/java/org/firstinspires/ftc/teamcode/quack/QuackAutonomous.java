@@ -5,7 +5,6 @@ import android.support.annotation.CallSuper;
 import com.disnodeteam.dogecv.CameraViewDisplay;
 import com.disnodeteam.dogecv.DogeCV;
 import com.disnodeteam.dogecv.detectors.roverrukus.CitrusGoldAlignDetector;
-import com.disnodeteam.dogecv.detectors.roverrukus.GoldAlignDetector;
 import com.disnodeteam.dogecv.detectors.roverrukus.SamplingOrderDetector;
 import com.disnodeteam.dogecv.filters.LeviColorFilter;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
@@ -15,10 +14,7 @@ import org.firstinspires.ftc.robotcore.external.navigation.AngleUnit;
 import org.firstinspires.ftc.robotcore.external.navigation.AxesOrder;
 import org.firstinspires.ftc.robotcore.external.navigation.AxesReference;
 import org.firstinspires.ftc.robotcore.external.navigation.Orientation;
-import org.opencv.core.Point;
 import org.opencv.core.Size;
-
-import java.util.Locale;
 
 import static com.disnodeteam.dogecv.detectors.roverrukus.SamplingOrderDetector.GoldLocation.CENTER;
 import static com.disnodeteam.dogecv.detectors.roverrukus.SamplingOrderDetector.GoldLocation.LEFT;
@@ -36,7 +32,7 @@ public class QuackAutonomous extends LinearOpMode {
     private final int CENTER_STRAFE_DISTANCE = 600;
     private final int RIGHT_STRAFE_DISTANCE = 2000;
 
-    private final int LIFT_ENCODER_COMPETITION = -20300;
+    private final int LIFT_ENCODER_COMPETITION = -20700;
 
     protected SamplingOrderDetector.GoldLocation goldLocation;
 
