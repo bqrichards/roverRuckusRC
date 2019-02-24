@@ -5,6 +5,7 @@ import android.support.annotation.CallSuper;
 import com.disnodeteam.dogecv.CameraViewDisplay;
 import com.disnodeteam.dogecv.DogeCV;
 import com.disnodeteam.dogecv.detectors.roverrukus.CitrusGoldAlignDetector;
+import com.disnodeteam.dogecv.detectors.roverrukus.GoldAlignDetector;
 import com.disnodeteam.dogecv.detectors.roverrukus.SamplingOrderDetector;
 import com.disnodeteam.dogecv.filters.LeviColorFilter;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
@@ -65,9 +66,9 @@ public class QuackAutonomous extends LinearOpMode {
 
         double center = size.height / 2;
 
-        double leftDist = Math.abs(detector.goldYPos);
-        double centerDist = Math.abs(detector.goldYPos - center);
-        double rightDist = Math.abs(detector.goldYPos - size.height);
+        double leftDist = Math.abs(detector.getYPosition());
+        double centerDist = Math.abs(detector.getYPosition() - center);
+        double rightDist = Math.abs(detector.getYPosition() - size.height);
         double closest = minimum(leftDist, centerDist, rightDist);
 
         if (closest == leftDist) {
@@ -86,12 +87,13 @@ public class QuackAutonomous extends LinearOpMode {
         for (double num : numbers) {
             min = Math.min(min, num);
         }
+
         return min;
     }
 
     @CallSuper
     @Override
-    public void runOpMode() {
+    public void runOpMode() throws InterruptedException {
         robot = new QuackRobot(hardwareMap);
         robot.initAutonomous(this);
 
@@ -99,7 +101,7 @@ public class QuackAutonomous extends LinearOpMode {
 
         robot.teamMarker.setPosition(robot.TEAM_MARKER_LATCH);
 
-        do {
+        while (!isStarted() && !isStopRequested()) {
             SamplingOrderDetector.GoldLocation updatedGoldLoc = grabGoldLocation();
             if (updatedGoldLoc != UNKNOWN) {
                 goldLocation = updatedGoldLoc;
@@ -107,7 +109,7 @@ public class QuackAutonomous extends LinearOpMode {
 
             telemetry.addData("Gold Location", goldLocation);
             telemetry.update();
-        } while (!isStarted());
+        }
 
         detector.disable();
 
@@ -115,11 +117,11 @@ public class QuackAutonomous extends LinearOpMode {
 
         pause();
 
-        strafe(LEFT, 600, 1);
+        strafe(LEFT, 600, 0.7);
 
         pause();
 
-        drive(500, 0.8);
+        drive(525, 0.8);
 
         pause();
 
@@ -132,7 +134,7 @@ public class QuackAutonomous extends LinearOpMode {
         }
     }
 
-    protected void drive(double distance, double power, boolean haltAtEnd) {
+    private void drive(double distance, double power, boolean haltAtEnd) {
         robot.rightFront.setDirection(REVERSE);
         robot.rightBack.setDirection(REVERSE);
 
@@ -196,7 +198,7 @@ public class QuackAutonomous extends LinearOpMode {
         robot.rightFront.setDirection(FORWARD);
         robot.rightBack.setDirection(FORWARD);
 
-        while (robot.rightFront.getDirection() != FORWARD) {
+        while (opModeIsActive() && robot.rightFront.getDirection() != FORWARD) {
             idle();
         }
 
@@ -242,7 +244,7 @@ public class QuackAutonomous extends LinearOpMode {
         robot.rightFront.setDirection(REVERSE);
         robot.rightBack.setDirection(REVERSE);
 
-        while (robot.rightFront.getDirection() != REVERSE) {
+        while (opModeIsActive() && robot.rightFront.getDirection() != REVERSE) {
             idle();
         }
 

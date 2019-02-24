@@ -3,6 +3,7 @@ package org.firstinspires.ftc.teamcode.quack;
 import com.qualcomm.robotcore.eventloop.opmode.Autonomous;
 
 import static com.disnodeteam.dogecv.detectors.roverrukus.SamplingOrderDetector.GoldLocation.LEFT;
+import static com.disnodeteam.dogecv.detectors.roverrukus.SamplingOrderDetector.GoldLocation.RIGHT;
 
 @Autonomous (name = "Depot", group = "V2")
 public class QuackDepot extends QuackAutonomous {
@@ -12,6 +13,8 @@ public class QuackDepot extends QuackAutonomous {
 
         if (goldLocation == LEFT) {
             left();
+        } else if (goldLocation == RIGHT) {
+            right();
         } else {
             // TODO - implement center and right
             depotSample();
@@ -60,6 +63,32 @@ public class QuackDepot extends QuackAutonomous {
         pause();
         pause();
 
-        drive(-3000, -DRIVE_POWER);
+        drive(-1500, -DRIVE_POWER);
+
+        pause();
+
+        strafe(LEFT, 700, 0.8);
+
+        pause();
+
+        drive(-2000, -0.35);
+    }
+
+    private void right() {
+        drive(1000, 0.8);
+
+        rotateTo(45);
+
+        pause();
+
+        strafe(RIGHT, 1800, 1);
+
+        pause();
+
+        drive(1000, 0.8);
+
+        pause();
+
+        robot.teamMarker.setPosition(robot.TEAM_MARKER_RELEASE);
     }
 }

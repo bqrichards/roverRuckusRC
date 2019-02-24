@@ -97,6 +97,12 @@ public class QuackRobot {
         //Figure out why the naive one doesn't have a public constructor
         parameters.accelerationIntegrationAlgorithm = new JustLoggingAccelerationIntegrator();
         imu.initialize(parameters);
+
+        while (!sender.opModeIsActive() && !sender.isStopRequested() && !imu.isGyroCalibrated()) {
+            sender.telemetry.addLine("IMU is calibrating");
+            sender.telemetry.update();
+            sender.idle();
+        }
     }
 
     /**
